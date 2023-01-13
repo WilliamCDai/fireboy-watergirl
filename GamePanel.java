@@ -13,21 +13,26 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 	public static final int GAME_WIDTH = 1080;
 	public static final int GAME_HEIGHT = 720;
 	int level;
-	Wall walls[] = new Wall[4];
+	Wall walls[] = new Wall[5];
 	
-	Player fireboy;
+	Player fireboy, watergirl;
 
 	public GamePanel(int level) {
+		this.setFocusable(true); // make everything in this class appear on the screen
+		this.addKeyListener(this); // start listening for keyboard input
+
 		this.setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
 		
 		this.level = level;
 		
 		//TEMPORARY
-		walls[0] = new Wall(0, 0, 1280, 30);
+		walls[0] = new Wall(0, 0, 1080, 30);
 		walls[1] = new Wall(0, 0, 30, 720);
-		walls[2] = new Wall(0, 690, 1280, 720);
-		walls[3] = new Wall(1050, 0, 1280, 720);
-		fireboy = new Player('w', 'a', 'd', 100, 100);
+		walls[2] = new Wall(0, 690, 1080, 720);
+		walls[3] = new Wall(1050, 0, 1080, 720);
+		walls[4] = new Wall(30, 600, 1000, 630);
+		fireboy = new Player('w', 'a', 'd', 100, 100, Color.red);
+		watergirl = new Player((char)38, (char)37, (char)39, 200, 100, Color.blue);
 		//TEMPORARY
 		
 		gameThread = new Thread(this);
@@ -35,7 +40,9 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 	}
 	
 	public void draw(Graphics g) {
-		for(int i=0;i<4;i++) walls[i].draw(g);
+		for(int i=0;i<5;i++) walls[i].draw(g);
+		fireboy.draw(g);
+		watergirl.draw(g);
 	}
 	
 	public void paint(Graphics g) {
@@ -43,6 +50,59 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 		graphics = image.getGraphics();
 		draw(graphics); // update the positions of everything on the screen
 		g.drawImage(image, 0, 0, this); // redraw everything on the screen
+	}
+	
+	public void playerCollidesWall() {
+		
+		for(int i=0;i<walls.length;i++) {
+			if(fireboy.x + Player.PlayerWidth > walls[i].x1 && fireboy.x < walls[i].x2) {
+				if(fireboy.y + Player.PlayerHeight >= walls[i].y1 && fireboy.y + Player.PlayerHeight <= walls[i].y1 + Player.PlayerHeight/2) {
+					fireboy.inAir = false;
+					fireboy.yVelocity = 0;
+					fireboy.y = walls[i].y1 - Player.PlayerHeight;
+				}
+				else if(fireboy.y <= walls[i].y2 && fireboy.y >= walls[i].y2 - Player.PlayerHeight/2){
+					fireboy.yVelocity = 0;
+					fireboy.y = walls[i].y2 + 1;
+				}
+			}
+			
+			if(fireboy.y < walls[i].y2 && fireboy.y + Player.PlayerHeight > walls[i].y1) {
+				if(fireboy.x + Player.PlayerWidth >= walls[i].x1 && fireboy.x + Player.PlayerWidth <= walls[i].x1 + Player.PlayerWidth/2) {
+					fireboy.x = walls[i].x1 - Player.PlayerWidth;
+				}				
+				else if(fireboy.x <= walls[i].x2 && fireboy.x >= walls[i].x2 - Player.PlayerWidth/2) {
+					fireboy.x = walls[i].x2;
+				}
+			}		
+		}
+		
+		for(int i=0;i<walls.length;i++) {
+			if(watergirl.x + Player.PlayerWidth > walls[i].x1 && watergirl.x < walls[i].x2) {
+				if(watergirl.y + Player.PlayerHeight >= walls[i].y1 && watergirl.y + Player.PlayerHeight <= walls[i].y1 + Player.PlayerHeight/2) {
+					watergirl.inAir = false;
+					watergirl.yVelocity = 0;
+					watergirl.y = walls[i].y1 - Player.PlayerHeight;
+				}
+				else if(watergirl.y <= walls[i].y2 && watergirl.y >= walls[i].y2 - Player.PlayerHeight/2){
+					watergirl.yVelocity = 0;
+					watergirl.y = walls[i].y2 + 1;
+				}
+			}
+			
+			if(watergirl.y < walls[i].y2 && watergirl.y + Player.PlayerHeight > walls[i].y1) {
+				if(watergirl.x + Player.PlayerWidth >= walls[i].x1 && watergirl.x + Player.PlayerWidth <= walls[i].x1 + Player.PlayerWidth/2) {
+					watergirl.x = walls[i].x1 - Player.PlayerWidth;
+				}				
+				else if(watergirl.x <= walls[i].x2 && watergirl.x >= walls[i].x2 - Player.PlayerWidth/2) {
+					watergirl.x = walls[i].x2;
+				}
+			}		
+		}
+	}
+	
+	public void checkCollision() {
+		playerCollidesWall();
 	}
 
 	@Override
@@ -53,14 +113,19 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
+		fireboy.keyPressed(e);
+		watergirl.keyPressed(e);
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
+		fireboy.keyReleased(e);
+		watergirl.keyReleased(e);
+	}
+	
+	public void move() {
+		fireboy.move();
+		watergirl.move();
 	}
 
 	@Override
@@ -77,6 +142,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 			lastTime = now;
 
 			if (delta >= 1) {
+				move();
+				checkCollision();
 				repaint();
 				delta--;
 			}
