@@ -12,18 +12,24 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 	
 	public static final int GAME_WIDTH = 1080;
 	public static final int GAME_HEIGHT = 720;
-	int level;
+	int level, framesAtFinish;
 	Wall walls[] = new Wall[5];
+	Instruction levelComplete;
 	
 	Player fireboy, watergirl;
+	
+	public boolean gameFinished;
 
 	public GamePanel(int level) {
 		this.setFocusable(true); // make everything in this class appear on the screen
 		this.addKeyListener(this); // start listening for keyboard input
 
 		this.setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
+		levelComplete = new Instruction(500, 300, "Level Complete");
 		
 		this.level = level;
+		gameFinished = false;
+		framesAtFinish = 0;
 		
 		//TEMPORARY
 		walls[0] = new Wall(0, 0, 1080, 30);
@@ -31,8 +37,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 		walls[2] = new Wall(0, 690, 1080, 720);
 		walls[3] = new Wall(1050, 0, 1080, 720);
 		walls[4] = new Wall(30, 600, 1000, 630);
-		fireboy = new Player('w', 'a', 'd', 100, 100, Color.red);
-		watergirl = new Player((char)38, (char)37, (char)39, 200, 100, Color.blue);
+		fireboy = new Player('w', 'a', 'd', 100, 100, Color.red, 400, 540);
+		watergirl = new Player((char)38, (char)37, (char)39, 200, 100, Color.blue, 500, 540);
 		//TEMPORARY
 		
 		gameThread = new Thread(this);
@@ -40,9 +46,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 	}
 	
 	public void draw(Graphics g) {
-		for(int i=0;i<5;i++) walls[i].draw(g);
 		fireboy.draw(g);
 		watergirl.draw(g);
+		for(int i=0;i<5;i++) walls[i].draw(g);
+		if(gameFinished) levelComplete.draw(g);
 	}
 	
 	public void paint(Graphics g) {
@@ -101,8 +108,20 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 		}
 	}
 	
+	public void playersAtDoors() {
+		if(fireboy.atDestination() && watergirl.atDestination()) {
+			framesAtFinish++;
+			
+			if(framesAtFinish >= 60) {
+				gameFinished = true;
+			}
+		}
+		else framesAtFinish = 0;
+	}
+	
 	public void checkCollision() {
 		playerCollidesWall();
+		playersAtDoors();
 	}
 
 	@Override
@@ -142,8 +161,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 			lastTime = now;
 
 			if (delta >= 1) {
-				move();
-				checkCollision();
+				if(!gameFinished) {
+					move();
+					checkCollision();
+				}
 				repaint();
 				delta--;
 			}
