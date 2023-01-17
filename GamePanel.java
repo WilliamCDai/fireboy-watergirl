@@ -3,6 +3,7 @@ package fireboywatergirl;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.io.*;
 
 public class GamePanel extends JPanel implements Runnable, KeyListener{
 	
@@ -12,23 +13,25 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 	
 	public static final int GAME_WIDTH = 1080;
 	public static final int GAME_HEIGHT = 720;
-	int level, framesAtFinish;
+	int level, framesAtFinish, framesDead;
 	Wall walls[] = new Wall[5];
+	Pool pools[] = new Pool[3];
 	Instruction levelComplete;
 	
 	Player fireboy, watergirl;
 	
-	public boolean gameFinished;
+	public boolean gameFinished, playersAlive;
 
 	public GamePanel(int level) {
 		this.setFocusable(true); // make everything in this class appear on the screen
 		this.addKeyListener(this); // start listening for keyboard input
 
 		this.setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
-		levelComplete = new Instruction(500, 300, "Level Complete");
+		levelComplete = new Instruction(400, 300, "Level Complete");
 		
 		this.level = level;
 		gameFinished = false;
+		playersAlive = true;
 		framesAtFinish = 0;
 		
 		//TEMPORARY
@@ -39,6 +42,9 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 		walls[4] = new Wall(30, 600, 1000, 630);
 		fireboy = new Player('w', 'a', 'd', 100, 100, Color.red, 400, 540);
 		watergirl = new Player((char)38, (char)37, (char)39, 200, 100, Color.blue, 500, 540);
+		pools[0] = new Pool(550, 600, 70, 0);
+		pools[1] = new Pool(630, 600, 70, 1);
+		pools[2] = new Pool(710, 600, 70, 2);
 		//TEMPORARY
 		
 		gameThread = new Thread(this);
@@ -49,6 +55,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 		fireboy.draw(g);
 		watergirl.draw(g);
 		for(int i=0;i<5;i++) walls[i].draw(g);
+		for(int i=0;i<3;i++) pools[i].draw(g);
 		if(gameFinished) levelComplete.draw(g);
 	}
 	
@@ -57,6 +64,15 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 		graphics = image.getGraphics();
 		draw(graphics); // update the positions of everything on the screen
 		g.drawImage(image, 0, 0, this); // redraw everything on the screen
+	}
+	
+	public void Reset() {
+		playersAlive = true;
+		gameFinished = false;
+		framesAtFinish = 0;
+		framesDead = 0;
+		fireboy.resetPosition();
+		watergirl.resetPosition();
 	}
 	
 	public void playerCollidesWall() {
@@ -119,8 +135,27 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 		else framesAtFinish = 0;
 	}
 	
+	public void playersInPools() {
+		for(int i=0;i<pools.length;i++) {
+			if(pools[i].type == 0 || pools[i].type == 1) {
+				if(watergirl.x < pools[i].startX + pools[i].length && watergirl.x + Player.PlayerWidth > pools[i].startX) {
+					if(watergirl.y + Player.PlayerHeight == pools[i].startY) 
+						playersAlive = false;
+				}
+			}
+			
+			if(pools[i].type == 0 || pools[i].type == 2) {
+				if(fireboy.x < pools[i].startX + pools[i].length && fireboy.x + Player.PlayerWidth > pools[i].startX) {
+					if(fireboy.y + Player.PlayerHeight == pools[i].startY)
+						playersAlive = false;
+				}
+			}
+		}
+	}
+	
 	public void checkCollision() {
 		playerCollidesWall();
+		playersInPools();
 		playersAtDoors();
 	}
 
@@ -132,14 +167,18 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		fireboy.keyPressed(e);
-		watergirl.keyPressed(e);
+		if(!gameFinished && playersAlive) {
+			fireboy.keyPressed(e);
+			watergirl.keyPressed(e);
+		}
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		fireboy.keyReleased(e);
-		watergirl.keyReleased(e);
+		if(!gameFinished && playersAlive) {
+			fireboy.keyReleased(e);
+			watergirl.keyReleased(e);
+		}
 	}
 	
 	public void move() {
@@ -161,10 +200,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 			lastTime = now;
 
 			if (delta >= 1) {
-				if(!gameFinished) {
-					move();
-					checkCollision();
-				}
+				if(!playersAlive) framesDead++;
+				if(framesDead >= 6) Reset();
+				if(!gameFinished && playersAlive) move();
+				checkCollision();
 				repaint();
 				delta--;
 			}
