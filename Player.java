@@ -2,6 +2,8 @@ package fireboywatergirl;
 
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.ImageIcon;
+import java.io.*;
 
 public class Player extends Rectangle{
 	
@@ -9,14 +11,19 @@ public class Player extends Rectangle{
 	
 	public static final int HorozontalSPEED = 5, VerticalSPEED = 15;
 	int yVelocity, xVelocity;
+	int startX, startY;
 	public char upButton, leftButton, rightButton;
 	public boolean inAir;
 	Color colour;
 	Door destination;
 	
+	private int w, h;
+	public Image playerImage;
+	
 	public Player(char upButton, char leftButton, char rightButton, int startX, int startY, Color colour, int doorX, int doorY) {
 		super(startX, startY, PlayerWidth, PlayerHeight);
 		x = startX; y = startY;
+		this.startX = startX; this.startY = startY;
 		
 		this.upButton = upButton;
 		this.leftButton = leftButton;
@@ -26,7 +33,21 @@ public class Player extends Rectangle{
 		
 		xVelocity = 0; yVelocity = 0;
 		inAir = true;
+		
+		//loadImage();
 	}
+	
+	/*public void loadImage() {
+		ImageIcon ii = new ImageIcon("src/assets/Fireboy.png");
+		playerImage = ii.getImage();
+		
+		w = playerImage.getWidth(null);
+		h = playerImage.getHeight(null);
+	}
+	
+	public Image getImage() {
+		return playerImage;
+	}*/
 	
 	public void keyPressed(KeyEvent e) {
 		// If the upbutton is being pressed
@@ -69,11 +90,20 @@ public class Player extends Rectangle{
 	}
 	
 	public boolean atDestination() {
+		if(xVelocity != 0 || yVelocity != 0) return false;
 		if(x < destination.x) return false;
 		if(y < destination.y) return false;
 		if(x + PlayerWidth > destination.x + Door.DOOR_WIDTH) return false;
 		if(y + PlayerHeight > destination.y + Door.DOOR_HEIGHT) return false;
 		return true;
+	}
+	
+	public void resetPosition() {
+		x = startX;
+		y = startY;
+		inAir = true;
+		yVelocity = 0;
+		xVelocity = 0;
 	}
 	
 	public void move() {
