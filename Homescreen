@@ -1,0 +1,23 @@
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+public class HomeScreen extends JPanel implements ActionListener {
+    
+    JButton startButton;
+    GameFrame game;
+    
+    public HomeScreen() {
+        setLayout(new BorderLayout());
+        startButton = new JButton("Start Game");
+        startButton.addActionListener(this);
+        add(startButton, BorderLayout.CENTER);
+    }
+    
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == startButton) {
+            game = new GameFrame();
+            game.setVisible(true);
+        }
+    }
+}
