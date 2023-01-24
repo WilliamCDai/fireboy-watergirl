@@ -1,16 +1,25 @@
+/* Fireboy and Watergirl
+ * William Dai and Amanda Wu
+ * 
+ * GameFrame class is extension of Jframe
+ * contains a Jpanel which contains all elements of the game
+ */
+
 package fireboywatergirl;
 
 import java.awt.*;
 import javax.swing.*;
+import java.io.*;
 
 public class GameFrame extends JFrame{
 
-	GamePanel level1;
+	GamePanel level; // make JPanel
 	
-	public GameFrame() {
-		level1 = new GamePanel(1); // run GamePanel constructor
-		this.add(level1);
-		this.setTitle("Fireboy and Lavagirl"); // set title for frame
+	public GameFrame() throws IOException{
+		
+		level = new GamePanel();
+		this.add(level);
+		this.setTitle("Fireboy and Watergirl"); // set title for frame
 		this.setResizable(false); // frame can't change size
 		this.setBackground(Color.black); // background is black
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // X button will stop program execution
